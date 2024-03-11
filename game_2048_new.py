@@ -174,12 +174,11 @@ LABEL_COLORS ={
 }
 
 ######################## AI GAME #########################################
-WEIGHT = np.array([[4**6, 4**5, 4**4, 4**3], 
-                    [4**5, 4**4, 4**3, 4**2], 
-                    [4**4, 4**3, 4**2, 4**1], 
-                    [4**3, 4**2, 4**1, 4**0]])
 
-DEPTH = 1
+WEIGHT = np.array([[4**15, 4**14, 4**13, 4**12], 
+                    [4**11, 4**10, 4**9, 4**8], 
+                    [4**7, 4**6, 4**5, 4**4], 
+                    [4**3, 4**2, 4**1, 4**0]])
 
 def heuristic(board):
     h = 0
@@ -190,7 +189,7 @@ def heuristic(board):
 
 def expectimax(board, depth, move):
     if depth < 0:
-        return heuristic(board), move
+        return (heuristic(board), move)
 
     
     if depth % 2 == 0:
@@ -204,7 +203,7 @@ def expectimax(board, depth, move):
                 new_score, _ = expectimax(new_board, depth - 1, move)
                 total_score += weight * new_score
 
-        return total_score / len(empty_cells), move
+        return (total_score / len(empty_cells), move)
     
     elif depth % 2 == 1:  
         max_score = -math.inf
@@ -215,47 +214,52 @@ def expectimax(board, depth, move):
                 new_score, _ = expectimax(new_board, depth - 1, move)
                 if new_score > max_score:
                     max_score = new_score
-        return max_score, move
+        return (max_score, move)
     
-
 def find_move(board, depth):
     next_move = 1
     results = []
 
     move_ready = False
-    best_heur = 0
-    backup_next_move = 1
+    best_heur = -float('inf')  # Initial value for the best heuristic
+    backup_next_move = move_left
 
     # Iterating through all moves sequentially
-    for move in [move_left, move_up, move_down, move_right]:
+    for move_fn in [move_left, move_up, move_down, move_right]:
         # Copies the current state of the game
         game_branch = np.copy(board)
         # Moves the board in the direction dictated by the for loop.
-        game_branch, _, _ = move(board)
+        game_branch, valid_move, _ = move_fn(game_branch)
 
-        # Sequentially calculates expectimax for the current move
-        result = expectimax(game_branch, depth, move)
-        results.append(result)
-
-    # Evaluating results
-    max_res_it = max(results, key=lambda x: x[0])[0]
-    backup_next_move = max(results, key=lambda x: x[0])[1]
-
-    # Loop through the results.
+        # Check if the move is valid
+        if valid_move:
+            # Sequentially calculates expectimax for the current move
+            result = expectimax(game_branch, depth, move_fn)
+            print(f'{move_fn}, { expectimax(game_branch, depth, move_fn)[1]}\n')
+            results.append(result)
+    print('new')
+        # Print each result separately
+    """ for idx, result in enumerate(results):
+        print(f'Result {idx + 1}: {result}\n')
+    # Loop through the results. """
+        
     for res in results:
+        # Evaluates results
+        best_heur = max(best_heur, res[0])
+        
+
         # Stores the best value of the threads.
         if res[0] >= best_heur:
             best_heur = res[0]
             next_move = res[1]
             move_ready = True
 
-    if move_ready:
-        return next_move
-
+    # If no valid moves and no empty cells, use backup_next_move
     if not move_ready and len(np.argwhere(board == 0)) < 1:
         next_move = backup_next_move
 
     return next_move
+
 
 
 ######################### GAME DISPLAY #############################################################
@@ -332,39 +336,18 @@ class Display(Frame):
         self.draw_grid_cells()
      
     def key_press(self, event):
-        valid_game = True
         key = repr(event.char)
-    
-
-        """ if key == AI_PLAY_KEY:
-            move_count = 0
-            while valid_game and not check_for_win(self.matrix):
-                move = find_move(self.matrix, DEPTH)
-                self.matrix, valid_game, _ = move(self.matrix)
-                if valid_game:
-                    self.matrix = add_new_tile(self.matrix)
-                    self.draw_grid_cells()
-                move_count += 1 """
-        #The code below is used for the AI 
+        
         if key == AI_PLAY_KEY:
             move_count = 0
-            while valid_game and not check_for_win(self.matrix):
-                move = find_move(self.matrix, DEPTH)
-                if move == move_up:
-                    self.matrix, move_made, _ = move_up(self.matrix)
-                elif move == move_down:
-                    self.matrix, move_made, _ = move_down(self.matrix)
-                elif move == move_left:
-                    self.matrix, move_made, _ = move_left(self.matrix)
-                elif move == move_right:
-                    self.matrix, move_made, _ = move_right(self.matrix)
-                    
-                if move_made:
-                    self.matrix = add_new_tile(self.matrix)
-                    self.draw_grid_cells()
-                move_count += 1
+            while not check_for_win(self.matrix) and fixed_move(self.matrix)[1]:
+                move = find_move(self.matrix, depth=1)
+                self.matrix, _, _ = move(self.matrix)             
+                self.matrix = add_new_tile(self.matrix)
+                self.draw_grid_cells()
+            move_count += 1
 
-        elif key in self.commands:
+        if key in self.commands:
             self.matrix, move_made, _ = self.commands[repr(event.char)](self.matrix)
             if move_made:
                 self.matrix = add_new_tile(self.matrix)
@@ -377,9 +360,20 @@ class Display(Frame):
             popup.geometry("300x150")
             label = Label(popup, text=f'Congratulations! You\'ve reached {NUMBER_TO_WIN}. Game Over!')
             label.pack(pady=10)
-            new_game_button = Button(popup, text="New Game", command=self.start_new_game)
+            new_game_button = Button(popup, text="New Game", command=lambda: [self.start_new_game(), popup.destroy()])
             new_game_button.pack(pady=10)
             stop_button = Button(popup, text="Stop", command=self.master.destroy)
             stop_button.pack(pady=10)
+        elif not fixed_move(self.matrix)[1]:
+            popup = Toplevel(self.master)
+            popup.title("Game Over")
+            popup.geometry("300x150")
+            label = Label(popup, text=f'Game Over! LOSSER!')
+            label.pack(pady=10)
+            new_game_button = Button(popup, text="New Game", command=lambda: [self.start_new_game(), popup.destroy()])
+            new_game_button.pack(pady=10)
+            stop_button = Button(popup, text="Stop", command=self.master.destroy)
+            stop_button.pack(pady=10)
+
 
 gamegrid = Display()

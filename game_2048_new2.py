@@ -11,9 +11,7 @@ CELL_PAD = 10
 
 #For the game 
 POSSIBLE_MOVES_COUNT = 4 #Up, down, left and right
-CELL_COUNT = 4 #Numbers of cells on the diagonal
-NUMBER_OF_SQUARES = CELL_COUNT * CELL_COUNT
-NEW_TILE_DISTRIBUTION = np.array([2, 2, 2, 2, 2, 2, 2, 2 ,2, 4])
+NUMBER_OF_MOVES = 4 
 
 #For control
 UP_KEY = "'w'"
@@ -21,10 +19,15 @@ DOWN_KEY = "'s'"
 LEFT_KEY = "'a'"
 RIGHT_KEY= "'d'"
 AI_PLAY_KEY = "'p'"
+AI_MULTI_PLAY = "'m'"
 
 #For AI control 
 NUMBER_TO_WIN = 2048
-NUMBER_OF_MOVES = 4 
+CELL_COUNT = 4 #Numbers of cells on the diagonal
+NUMBER_OF_SQUARES = CELL_COUNT * CELL_COUNT
+NEW_TILE_DISTRIBUTION = np.array([2, 2, 2, 2, 2, 2, 2, 2 ,2, 4])
+
+
 
 
 ######################## GAME FUNCTION ###################################
@@ -156,7 +159,9 @@ TILE_COLORS = {
     256: "#fce130",
     512: "#ffdb4a",
     1024: "#f0b922",
-    2048: "#fad74d"
+    2048: "#fad74d",
+    4096: "#fad74d",
+    8192: "#fad74d"
 }
 
 LABEL_COLORS ={
@@ -170,45 +175,46 @@ LABEL_COLORS ={
     256: "#ffffff",
     512: "#ffffff",
     1024: "#ffffff",
-    2048: "#ffffff"
+    2048: "#ffffff",
+    4096: "#ffffff",
+    8192: "#ffffff"
 }
 
 ######################## AI GAME #########################################
 
-""" WEIGHT = np.array([[2**15, 2**14, 2**13, 2**12], 
+WEIGHT_SNAKE = np.array([[2**15, 2**14, 2**13, 2**12], 
                     [2**8, 2**9, 2**10, 2**11], 
                     [2**7, 2**6, 2**5, 2**4], 
-                    [2**0, 2**1, 2**2, 2**3]]) """
+                    [2**0, 2**1, 2**2, 2**3]])
 
-WEIGHT = np.array([[2**7, 2**6, 2**5, 2**4], 
+WEIGHT_DIAG = np.array([[2**7, 2**6, 2**5, 2**4], 
                     [2**6, 2**5, 2**4, 2**3], 
                     [2**5, 2**4, 2**3, 2**2], 
                     [2**4, 2**3, 2**2, 2**1]])
 
-""" WEIGHT = np.array([[4**1, 4**2, 4**3, 4**4], 
-                    [4**2, 4**3, 4**4, 4**5], 
-                    [4**3, 4**4, 4**5, 4**6], 
-                    [4**4, 4**5, 4**6, 4**7]])
- """
-def heuristic(board):
+
+
+def heuristic(board, type_hes = 'WEIGHT_SNAKE'):
+    if type_hes == 'WEIGHT_SNAKE':
+        WEIGHT = WEIGHT_SNAKE
+    else:
+        WEIGHT = WEIGHT_DIAG
+
     h = 0
     for i in range(CELL_COUNT):
         for j in range(CELL_COUNT):
             h += board[i,j] * WEIGHT[i,j]
     return h   
 
-def expectimax(board, depth, move):
+def expectimax(board, depth, move, type_hes):
     
     if depth < 0:
-        print('\t in heuristic')
-        return heuristic(board), move
+        return heuristic(board,type_hes), move
 
     if depth % 2 == 0:
         if np.sum((board==0).astype('int')) == 0:
-            print('in sum')
-            total_score = expectimax(new_board, depth - 1, move)
+            total_score = expectimax(new_board, depth - 1, move, type_hes)
         else:
-            print('in tile')
             empty_cells = np.argwhere(board == 0)
             total_score = 0
             for tile_value, weight in [(2, 0.9), (4, 0.1)]:
@@ -216,30 +222,24 @@ def expectimax(board, depth, move):
                     row, col = empty_cell
                     new_board = np.copy(board)
                     new_board[row, col] = tile_value
-                    new_score, _ = expectimax(new_board, depth - 1, move)
+                    new_score, _ = expectimax(new_board, depth - 1, move, type_hes)
                     total_score += 1.* weight * new_score /len(empty_cells)
 
         return total_score, move
     
     elif depth % 2 == 1:  
-        print('in player')
         max_score = -math.inf
         for move_player in [move_left, move_up, move_down, move_right]:
             new_board, move_made, _ = move_player(np.copy(board))
-            print(np.copy(board))
-            print(move_made, move_player)
-            print(new_board)
             if move_made:
-                print(f'\move made: t{move}')
-                new_score, _ = expectimax(np.copy(new_board), depth - 1, move_player)
+                new_score, _ = expectimax(np.copy(new_board), depth - 1, move_player, type_hes)
                 if new_score > max_score:
                     max_score = new_score
-                    print(f'\t\t {max_score}')
                     move = move_player
         return max_score, move
 
 
-def find_move(board, depth):
+def find_move(board, depth, type_hes):
     max_value = -float('inf')  
     next_move = None
 
@@ -248,10 +248,7 @@ def find_move(board, depth):
         board_new, move_made, _ = move(board_copy)
 
         if move_made == True:
-            print(f'Expectimax to check {move}')
-            print(board_new)
-            value, _ = expectimax(np.copy(board_new), depth, move)
-            print(f'{move}, {value}')
+            value, _ = expectimax(np.copy(board_new), depth, move, type_hes)
             if value > max_value:
                 max_value = value
                 next_move = move 
@@ -260,12 +257,10 @@ def find_move(board, depth):
         for move in [move_left, move_up, move_down, move_right]:
             board_copy = np.copy(board)
             board_new, move_made, _ = move(board_copy)
-            h = heuristic(board_new)
+            h = heuristic(board_new, type_hes)
             if h > max_value:
                 max_value = h
                 next_move = move
-
-    print(f'The return move was {next_move}')
 
     return next_move
 
@@ -350,12 +345,71 @@ class Display(Frame):
         
         if key == AI_PLAY_KEY:
             move_count = 0
-            while not check_for_win(self.matrix) and fixed_move(self.matrix)[1]:
-                move = find_move(self.matrix, depth=2)
-                self.matrix, _, _ = move(self.matrix)             
+            score_tot = 0
+            won_the_game = 0
+            while fixed_move(self.matrix)[1]:
+                if not check_for_win(self.matrix):
+                    won_the_game = 1
+                move = find_move(self.matrix, depth=2, type_hes='WEIGHT_DIAG')
+                self.matrix, _, score_new = move(self.matrix) 
+                score_tot += score_new            
                 self.matrix = add_new_tile(self.matrix)
                 self.draw_grid_cells()
-            move_count += 1
+                move_count += 1
+        elif key == AI_MULTI_PLAY:
+            num_games = 90
+            move_count = 0
+            score_tot = 0
+            won_the_game = 0
+            # Opret tomme matricer til at gemme resultaterne
+            results_weight = np.zeros((6, num_games))
+
+            # Loop for at spille spillet og gemme resultaterne
+            for DEPTH in [2]:
+                for j, types in enumerate(['WEIGHT_DIAG', 'WEIGHT_SNAKE']):
+                    for i in range(num_games):
+                        while fixed_move(self.matrix)[1]:
+                            if check_for_win(self.matrix):
+                                won_the_game = 1
+                            move = find_move(self.matrix, DEPTH, type_hes=types)
+                            self.matrix, _, score_new = move(self.matrix) 
+                            score_tot += score_new            
+                            self.matrix = add_new_tile(self.matrix)
+                            self.draw_grid_cells()
+                            move_count += 1
+                        results_weight[0 + 3*j, i] = move_count
+                        results_weight[1 + 3*j, i] = won_the_game
+                        results_weight[2 + 3*j, i] = score_tot
+                        move_count = 0
+                        score_tot = 0
+                        won_the_game = 0
+                        score_new = 0
+                        self.start_new_game()
+                print(f'Results for depth: {DEPTH}:')
+                print(f'{results_weight}\n')
+
+
+            """ for i in range(num_games):
+                while fixed_move(self.matrix)[1]:
+                    if check_for_win(self.matrix):
+                        won_the_game = 1
+                    move = find_move(self.matrix, depth=2, type_hes='WEIGHT_SNAKE')
+                    self.matrix, _, score_new = move(self.matrix) 
+                    score_tot += score_new            
+                    self.matrix = add_new_tile(self.matrix)
+                    self.draw_grid_cells()
+                    move_count += 1
+                results_weight_snake[0, i] = move_count
+                results_weight_snake[1, i] = won_the_game
+                results_weight_snake[2, i] = score_tot
+                move_count = 0
+                score_tot = 0
+                won_the_game = 0 
+                self.start_new_game() """
+
+
+            
+
 
         if key in self.commands:
             self.matrix, move_made, _ = self.commands[repr(event.char)](self.matrix)
@@ -364,7 +418,7 @@ class Display(Frame):
                 self.draw_grid_cells()
                 move_made = False
         
-        if check_for_win(self.matrix):
+        """if check_for_win(self.matrix):
             popup = Toplevel(self.master)
             popup.title("Game Over")
             popup.geometry("300x150")
@@ -383,7 +437,9 @@ class Display(Frame):
             new_game_button = Button(popup, text="New Game", command=lambda: [self.start_new_game(), popup.destroy()])
             new_game_button.pack(pady=10)
             stop_button = Button(popup, text="Stop", command=self.master.destroy)
-            stop_button.pack(pady=10)
+            stop_button.pack(pady=10) """
+
+
 
 
 gamegrid = Display()

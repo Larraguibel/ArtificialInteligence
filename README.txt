@@ -21,8 +21,7 @@ To install and run the game, follow these steps:
 Once the game is running, you can interact with it using the following controls:
 
   Arrow Keys: Use the arrow keys (up, down, left, right) to move the tiles on the game board.
-	'p' Key: Press the 'p' key to enable automatic gameplay using the AI algorithm with a fixed depth and heuristic.
-	'm' Key: Press the 'm' key to trigger multiple games with different depths and heuristics, displaying the results for each depth.
+	'p' Key: Press the 'p' key to enable automatic gameplay using the AI algorithm.
 
 # Features
 	Graphical User Interface: The game features a graphical user interface built using Tkinter, providing an interactive gaming experience.

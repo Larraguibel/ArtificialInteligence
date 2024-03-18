@@ -15,7 +15,7 @@ To install and run the game, follow these steps:
 	pip install tk
 	pip install numpy
 5. Run the game script by executing the following command:
-	python game.py
+	python game_2048_new2.py
 
 # Usage
 Once the game is running, you can interact with it using the following controls:

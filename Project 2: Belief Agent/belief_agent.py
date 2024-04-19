@@ -14,6 +14,7 @@ class BeliefBase:
             self.make_consistent_beliefs()
     
     def revise(self, belief):
+        # Levi's identity
         self.contract(Not(belief))
         self.expand(belief)
 

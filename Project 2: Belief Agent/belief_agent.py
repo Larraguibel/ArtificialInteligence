@@ -62,3 +62,35 @@ class BeliefBase:
     
     def __mul__(self, belief):
         self.revise(belief)
+
+# contractions with Horn Clauses
+
+def contract_using_resolution(self, belief):
+    cnf_belief = self._convert_to_cnf(belief)
+    
+    # Identify Horn clauses with belief to contract
+    horn_clauses = []
+    for clause in cnf_belief.args:
+        if is_horn_clause(clause):
+            horn_clauses.append(clause)
+    
+    # Select largest set of clauses containing belief
+    largest_set = select_largest_set(horn_clauses, belief)
+    
+    # Apply resolution
+    new_clauses = apply_resolution(largest_set, belief)
+    
+    # Remove the contracted belief
+    self.contract(belief)
+    
+    # Remove contradictory clauses
+    for clause in new_clauses:
+        if Not(clause) in self.beliefs:
+            self.contract(Not(clause))
+    
+    # Add new clauses to the belief base
+    for clause in new_clauses:
+        self.expand(clause)
+    
+    # Ensure consistency
+    self.make_consistent_beliefs()

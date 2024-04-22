@@ -79,7 +79,7 @@ class BeliefBase:
         belief_base_cnf = self.to_CNF()
         new_set = And(belief_base_cnf, cnf_formula)
         subsets = [c for r in range(len(new_set.args) + 1) for c in combinations(new_set.args, r)]
-        # Terminarrr
+        # TODO TOMORROW
         
             
     def contract_using_resolution(self, belief):

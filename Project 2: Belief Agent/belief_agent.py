@@ -41,27 +41,26 @@ class BeliefBase:
 
     def _convert_to_cnf(self, belief):
         if isinstance(belief, And):
-            print("En And")
             return And(*(self._convert_to_cnf(arg) for arg in belief.args))
         
         elif isinstance(belief, Or):
             return Or(*(self._convert_to_cnf(arg) for arg in belief.args))
         
         elif isinstance(belief, Not):
-            print("En Not")
             if isinstance(belief.args[0], And):
-                return Or(*(self._convert_to_cnf(Not(arg)) for arg in belief.args))
+                return Or(*(Not(self._convert_to_cnf(arg)) for arg in belief.args[0].args))
+
             elif isinstance(belief.args[0], Or):
-                return And(*(self._convert_to_cnf(Not(arg)) for arg in belief.args))
+                return And(*(Not(self._convert_to_cnf(arg)) for arg in belief.args[0].args))
 
-            elif isinstance(belief, Implies):
-                return And(self._convert_to_cnf(belief.args[0]), self._convert_to_cnf(Not(belief.args[1])))
-            
-            elif isinstance(belief, Equivalent):
-                return Or(self._convert_to_cnf((Not(Implies(belief.args[0], belief.args[1])))),
-                        self._convert_to_cnf(Not(Implies(belief.args[1], belief.args[0]))))
+            elif isinstance(belief.args[0], Implies):
+                return And(self._convert_to_cnf(belief.args[0].args[0]), self._convert_to_cnf(Not(belief.args[0].args[1])))
 
-            elif belief.is_Atom:
+            elif isinstance(belief.args[0], Equivalent):
+                return Or(self._convert_to_cnf(Not(Implies(belief.args[0].args[0], belief.args[0].args[1]))),
+                        self._convert_to_cnf(Not(Implies(belief.args[0].args[1], belief.args[0].args[0]))))
+
+            elif belief.args[0].is_Atom:
                 return belief
 
         elif isinstance(belief, Implies):
@@ -69,9 +68,10 @@ class BeliefBase:
         
         elif isinstance(belief, Equivalent):
             return And(self._convert_to_cnf(Implies(belief.args[0], belief.args[1])),
-                       self._convert_to_cnf(Implies(belief.args[1], belief.args[0])))
+                    self._convert_to_cnf(Implies(belief.args[1], belief.args[0])))
         else:
             return belief
+
 
     def check_entailment(self, formula):
         # Must return true if KB ^ ~phi is False
@@ -79,8 +79,8 @@ class BeliefBase:
         belief_base_cnf = self.to_CNF()
         new_set = And(belief_base_cnf, cnf_formula)
         subsets = [c for r in range(len(new_set.args) + 1) for c in combinations(new_set.args, r)]
+        # Terminarrr
         
-
             
     def contract_using_resolution(self, belief):
         cnf_belief = self._convert_to_cnf(belief)

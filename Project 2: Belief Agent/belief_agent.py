@@ -1,5 +1,6 @@
 from sympy.logic.boolalg import And, Or, Not, Implies, Equivalent
 from sympy import symbols
+from itertools import combinations
 
 class BeliefBase:
     def __init__(self):
@@ -40,45 +41,47 @@ class BeliefBase:
 
     def _convert_to_cnf(self, belief):
         if isinstance(belief, And):
+            print("En And")
             return And(*(self._convert_to_cnf(arg) for arg in belief.args))
+        
         elif isinstance(belief, Or):
             return Or(*(self._convert_to_cnf(arg) for arg in belief.args))
+        
         elif isinstance(belief, Not):
-            return Not(self._convert_to_cnf(belief.args[0]))
+            print("En Not")
+            if isinstance(belief.args[0], And):
+                return Or(*(self._convert_to_cnf(Not(arg)) for arg in belief.args))
+            elif isinstance(belief.args[0], Or):
+                return And(*(self._convert_to_cnf(Not(arg)) for arg in belief.args))
+
+            elif isinstance(belief, Implies):
+                return And(self._convert_to_cnf(belief.args[0]), self._convert_to_cnf(Not(belief.args[1])))
+            
+            elif isinstance(belief, Equivalent):
+                return Or(self._convert_to_cnf((Not(Implies(belief.args[0], belief.args[1])))),
+                        self._convert_to_cnf(Not(Implies(belief.args[1], belief.args[0]))))
+
+            elif belief.is_Atom:
+                return belief
+
         elif isinstance(belief, Implies):
             return Or(Not(self._convert_to_cnf(belief.args[0])), self._convert_to_cnf(belief.args[1]))
+        
         elif isinstance(belief, Equivalent):
-            return And(Implies(self._convert_to_cnf(belief.args[0]), self._convert_to_cnf(belief.args[1])),
-                       Implies(self._convert_to_cnf(belief.args[1]), self._convert_to_cnf(belief.args[0])))
+            return And(self._convert_to_cnf(Implies(belief.args[0], belief.args[1])),
+                       self._convert_to_cnf(Implies(belief.args[1], belief.args[0])))
         else:
             return belief
 
     def check_entailment(self, formula):
+        # Must return true if KB ^ ~phi is False
         cnf_formula = self._convert_to_cnf(formula)
         belief_base_cnf = self.to_CNF()
+        new_set = And(belief_base_cnf, cnf_formula)
+        subsets = [c for r in range(len(new_set.args) + 1) for c in combinations(new_set.args, r)]
         
 
-    def is_contradiction(self):
-        for belief in self.beliefs:
-            if Not(belief) in self.beliefs:
-                return True
-        return False
-
-    def __str__(self):
-        return "{" + ", ".join(map(str, self.beliefs)) + "}"
-
-    def __repr__(self):
-        return "{" + ", ".join(map(str, self.beliefs)) + "}" 
-
-    def __add__(self, belief):
-        self.expand(belief)
-
-    def __truediv__(self, belief):
-        self.contract(belief)
-
-    def __mul__(self, belief):
-        self.revise(belief)
-
+            
     def contract_using_resolution(self, belief):
         cnf_belief = self._convert_to_cnf(belief)
 
@@ -145,6 +148,21 @@ class BeliefBase:
         else:
             return None
 
+    def __str__(self):
+        return "{" + ", ".join(map(str, self.beliefs)) + "}"
+
+    def __repr__(self):
+        return "{" + ", ".join(map(str, self.beliefs)) + "}" 
+
+    def __add__(self, belief):
+        self.expand(belief)
+
+    def __truediv__(self, belief):
+        self.contract(belief)
+
+    def __mul__(self, belief):
+        self.revise(belief)
+        
 
 # Test
 if __name__ == "__main__":

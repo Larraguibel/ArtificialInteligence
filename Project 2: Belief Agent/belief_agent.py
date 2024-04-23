@@ -11,13 +11,30 @@ class BeliefBase:
         self.priorities = {value: i for i, value in enumerate(self.possible_symbol_values)}
 
     def expand(self, belief):
-        self.beliefs.add(belief)
+        cnf_belief = self._convert_to_cnf(belief)
+        self.beliefs.add(cnf_belief)
+
+    def remove(self, belief, belief_set=None):
+        cnf_belief = self._convert_to_cnf(belief)
+        if belief_set is None:
+            if cnf_belief in self.beliefs:
+                self.beliefs.remove(cnf_belief)
+        else:
+            if cnf_belief in belief_set:
+                belief_set.remove(cnf_belief)
 
     def contract(self, belief):
         # Erase lowest priority if contradicts new info
-        if belief in self.beliefs:
-            cnf_belief_base = self.to_CNF()
-            cnf_belief = self._convert_to_cnf(belief)
+        cnf_belief = self._convert_to_cnf(belief)
+        if cnf_belief in self.beliefs:
+            self.remove(cnf_belief)
+            while self.check_entailment(cnf_belief):
+                for clause in self.beliefs:
+                    copy_beliefs = self.beliefs.copy()
+                    self.remove(clause, belief_set=copy_beliefs)
+                    if self.check_entailment(cnf_belief, copy_beliefs):
+                        pass
+                        
 
 
     def revise(self, belief):
@@ -25,11 +42,17 @@ class BeliefBase:
         self.contract(Not(belief))
         self.expand(belief)
 
-    def to_CNF(self):
-        cnf_beliefs = set()
-        for belief in self.beliefs:
-            cnf_beliefs.add(self._convert_to_cnf(belief))
-        return And(*cnf_beliefs)
+    def to_CNF(self, belief_base=None):
+        if belief_base is None:
+            cnf_beliefs = set()
+            for belief in self.beliefs:
+                cnf_beliefs.add(self._convert_to_cnf(belief))
+            return And(*cnf_beliefs)
+        else:
+            cnf_beliefs = set()
+            for belief in belief_base:
+                cnf_beliefs.add(self._convert_to_cnf(belief))
+            return And(*cnf_beliefs)
 
     def _convert_to_cnf(self, belief):
         if isinstance(belief, And):
@@ -50,11 +73,17 @@ class BeliefBase:
         else:
             return belief
 
-    def check_entailment(self, formula):
-        cnf_formula = self._convert_to_cnf(formula)
-        belief_base_cnf = self.to_CNF()
-        new_set = And(belief_base_cnf, Not(cnf_formula))
-        return not satisfiable(new_set)
+    def check_entailment(self, formula, belief_base=None):
+        if belief_base is None:
+            cnf_formula = self._convert_to_cnf(formula)
+            belief_base_cnf = self.to_CNF()
+            new_set = And(belief_base_cnf, Not(cnf_formula))
+            return not satisfiable(new_set)
+        else:
+            cnf_formula = self._convert_to_cnf(formula)
+            belief_base_cnf = self.to_CNF(belief_base)
+            new_set = And(belief_base_cnf, Not(cnf_formula))
+            return not satisfiable(new_set)         
 
 
     def contract_using_resolution(self, belief):
@@ -141,9 +170,8 @@ class BeliefBase:
 
 # Test
 if __name__ == "__main__":
-    belief_base = BeliefBase()
-    A, B, C = symbols('A B C')
-
+    belief_base = BeliefBase('A B C')  
+    A, B, C = belief_base.symbols
     # Expand belief base
     belief_base.expand(A)
     belief_base.expand(B)

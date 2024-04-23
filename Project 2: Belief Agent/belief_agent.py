@@ -1,37 +1,29 @@
-from sympy.logic.boolalg import And, Or, Not, Implies, Equivalent
+from sympy.logic.boolalg import And, Or, Not, Implies, Equivalent, to_cnf
 from sympy import symbols
-from itertools import combinations
+from sympy.logic.inference import satisfiable
+from AGM_functions import generate_combinations
 
 class BeliefBase:
-    def __init__(self):
+    def __init__(self, atomic_symbols: str):
         self.beliefs = set()
-        self.priorities = dict()
+        self.symbols = symbols(atomic_symbols)
+        self.possible_symbol_values = generate_combinations(len(self.symbols))
+        self.priorities = {value: i for i, value in enumerate(self.possible_symbol_values)}
 
-    def expand(self, belief, priority=1):
+    def expand(self, belief):
         self.beliefs.add(belief)
-        self.assign_priority(belief, priority)
 
     def contract(self, belief):
+        # Erase lowest priority if contradicts new info
         if belief in self.beliefs:
-            self.beliefs.remove(belief)
-            self.make_consistent_beliefs()
+            cnf_belief_base = self.to_CNF()
+            cnf_belief = self._convert_to_cnf(belief)
+
 
     def revise(self, belief):
         # Levi's identity
         self.contract(Not(belief))
         self.expand(belief)
-
-    def make_consistent_beliefs(self):
-        # Check for contradictory beliefs + remove them
-        for belief in self.beliefs.copy():
-            if Not(belief) in self.beliefs:
-                self.beliefs.remove(belief)
-
-    def assign_priority(self, belief, priority=None):
-        if priority is None:
-            self.priorities[belief.__str__()] = len(self.beliefs)
-        else:
-            self.priorities[belief.__str__()] = priority
 
     def to_CNF(self):
         cnf_beliefs = set()
@@ -45,23 +37,9 @@ class BeliefBase:
         
         elif isinstance(belief, Or):
             return Or(*(self._convert_to_cnf(arg) for arg in belief.args))
-        
+
         elif isinstance(belief, Not):
-            if isinstance(belief.args[0], And):
-                return Or(*(Not(self._convert_to_cnf(arg)) for arg in belief.args[0].args))
-
-            elif isinstance(belief.args[0], Or):
-                return And(*(Not(self._convert_to_cnf(arg)) for arg in belief.args[0].args))
-
-            elif isinstance(belief.args[0], Implies):
-                return And(self._convert_to_cnf(belief.args[0].args[0]), self._convert_to_cnf(Not(belief.args[0].args[1])))
-
-            elif isinstance(belief.args[0], Equivalent):
-                return Or(self._convert_to_cnf(Not(Implies(belief.args[0].args[0], belief.args[0].args[1]))),
-                        self._convert_to_cnf(Not(Implies(belief.args[0].args[1], belief.args[0].args[0]))))
-
-            elif belief.args[0].is_Atom:
-                return belief
+            return Not(self._convert_to_cnf(belief.args[0]))
 
         elif isinstance(belief, Implies):
             return Or(Not(self._convert_to_cnf(belief.args[0])), self._convert_to_cnf(belief.args[1]))
@@ -72,16 +50,13 @@ class BeliefBase:
         else:
             return belief
 
-
     def check_entailment(self, formula):
-        # Must return true if KB ^ ~phi is False
         cnf_formula = self._convert_to_cnf(formula)
         belief_base_cnf = self.to_CNF()
-        new_set = And(belief_base_cnf, cnf_formula)
-        subsets = [c for r in range(len(new_set.args) + 1) for c in combinations(new_set.args, r)]
-        # TODO TOMORROW
-        
-            
+        new_set = And(belief_base_cnf, Not(cnf_formula))
+        return not satisfiable(new_set)
+
+
     def contract_using_resolution(self, belief):
         cnf_belief = self._convert_to_cnf(belief)
 

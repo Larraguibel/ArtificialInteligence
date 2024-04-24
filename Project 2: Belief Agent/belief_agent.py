@@ -26,14 +26,24 @@ class BeliefBase:
                 belief_set.remove(cnf_belief)
 
     def contract(self, extract_belief):
-        sorted_beliefs = sorted(self.beliefs_priorities, key=lambda x: (-x[1]))
-        entailed_formulas = []
-        for (belief, _) in sorted_beliefs:
-            a = self.check_entailment(extract_belief, belief)
-            print(belief, a)
-            if a:
-                print(belief)
-                self.beliefs.remove(*[to_cnf(belief)])
+
+        if extract_belief in self.beliefs:
+            # We remove the belief both from our priority list and our belief set
+            self.remove(extract_belief)
+            self.beliefs_priorities.remove((extract_belief, self.priorities[extract_belief]))
+
+            sorted_beliefs = sorted(self.beliefs_priorities, key=lambda x: (-x[1]))
+            while self.check_entailment(extract_belief):
+                for (belief, pri) in sorted_beliefs:
+                    belief_not_entailed = satisfiable(And(Not(extract_belief), belief))
+                    print("\nis_belief_entailed == True??", belief_not_entailed == True)
+                    print("belief:",belief, "  is belief entailed?:", belief_not_entailed)
+                    if belief_not_entailed != False:
+                        print("Belief to be removed:", belief)
+                        self.remove(belief)
+                        sorted_beliefs.remove((to_cnf(belief), pri))
+                        break
+
 
     def revise(self, belief):
         # Levi's identity
@@ -54,17 +64,17 @@ class BeliefBase:
 
 # Test
 if __name__ == "__main__":
-    belief_base = BeliefBase('A B C')  
-    A, B, C = belief_base.symbols
+    belief_base = BeliefBase('p q')  
+    p, q = belief_base.symbols
     # Expand belief base
-    belief_base.expand(A, 1)
-    belief_base.expand(B, 2)
-    belief_base.expand(C, 3)
-    belief_base.expand(C, 5)
-    belief_base.expand(Not(B), 2)
-    belief_base.expand(Or(C, B), 5)
+    belief_base.expand(p, 1)
+    belief_base.expand(q, 2)
+    belief_base.expand(Implies(p, q), 3)
     print(belief_base.beliefs)
-    belief_base.contract(B)
+    
+    print("\n Contraction:")
+    belief_base.contract(q)
+    print("\nNew beliefbalse:")
     print(belief_base.beliefs) 
 
     """ print("Belief Base:", belief_base)

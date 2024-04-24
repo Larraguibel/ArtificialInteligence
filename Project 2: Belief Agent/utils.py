@@ -32,3 +32,4 @@ def create_graph(belief_set):
             current_set = neigh[0]  # Here you might want to choose the first neighbor to continue the exploration
     print(f"Out of loop after {counter} iterations")
     return graph
+    # 

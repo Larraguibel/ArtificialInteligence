@@ -28,18 +28,26 @@ class BeliefBase:
     def contract(self, extract_belief):
 
         if extract_belief in self.beliefs:
-            # We remove the belief both from our priority list and our belief set
+            # We remove the belief both from our priority list and our belief set. Then sort beliefs by priority.
             self.remove(extract_belief)
             self.beliefs_priorities.remove((extract_belief, self.priorities[extract_belief]))
 
             sorted_beliefs = sorted(self.beliefs_priorities, key=lambda x: (-x[1]))
+            
+            # While extract_belief is entailed with our belief base
             while self.check_entailment(extract_belief):
+                
+                # We check entailment for each belief individually ,to determine which one must be removed
                 for (belief, pri) in sorted_beliefs:
+                    
                     belief_not_entailed = satisfiable(And(Not(extract_belief), belief))
-                    print("\nis_belief_entailed == True??", belief_not_entailed == True)
-                    print("belief:",belief, "  is belief entailed?:", belief_not_entailed)
+                    
+                    # Basically if our extract_belief is entailed, we remove it from the sets we are working with
+                    # Done this way because belief_not_entailed can be for example {p: False, q: True}, ehich is nor true or false.
+                    # If belief_not_entailed != False, that means that there is at least one combination of p and q truth values
+                    # that satisfies the eq. Hopes this make it a bit more clear :)
+
                     if belief_not_entailed != False:
-                        print("Belief to be removed:", belief)
                         self.remove(belief)
                         sorted_beliefs.remove((to_cnf(belief), pri))
                         break

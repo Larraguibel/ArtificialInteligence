@@ -1,7 +1,6 @@
 from sympy.logic.boolalg import And, Or, Not, Implies, Equivalent, to_cnf
 from sympy import symbols
 from sympy.logic.inference import satisfiable
-from utils import generate_combinations
 
 class BeliefBase:
     def __init__(self, atomic_symbols: str):

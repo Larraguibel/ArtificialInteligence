@@ -1,8 +1,8 @@
-from itertools import product
+from itertools import combinations
 from math import factorial
 
-def generate_combinations(n):
-    return list(product([True, False], repeat=n))
+def generate_subsets(n, belief_base):
+    return list(combinations(belief_base, n))
 
 def neighbours(beliefs: set):
     if len(beliefs) == 1:
@@ -29,7 +29,7 @@ def create_graph(belief_set):
         else:
             graph[tuple(current_set)] = neigh
             counter += 1
-            current_set = neigh[0]  # Here you might want to choose the first neighbor to continue the exploration
+            current_set = neigh  # Explore all neighbors
     print(f"Out of loop after {counter} iterations")
     return graph
-    # 
+

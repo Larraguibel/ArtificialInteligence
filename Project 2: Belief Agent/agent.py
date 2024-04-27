@@ -86,3 +86,9 @@ class BeliefBase:
             belief_base_cnf = to_cnf(belief_base)
             new_set = And(*belief_base_cnf, Not(cnf_formula))
             return not satisfiable(new_set)         
+
+    def __str__(self):
+        return "{" + ", ".join(map(str, self.beliefs)) + "}"
+
+    def __repr__(self):
+        return "{" + ", ".join(map(str, self.beliefs)) + "}"

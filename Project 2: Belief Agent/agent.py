@@ -1,8 +1,7 @@
-from sympy.logic.boolalg import And, Not, to_cnf
+from sympy.logic.boolalg import And, Not, Or, Implies, to_cnf
 from sympy import symbols
-from sympy.logic.inference import satisfiable
-from utils import generate_all_subsets
 import numpy as np
+from func import generate_all_subsets, check_entailment, test_closure_contraction, test_inclusion_contraction, test_success_contraction
 
 class BeliefBase:
     def __init__(self, atomic_symbols: str):
@@ -53,12 +52,13 @@ class BeliefBase:
         Args:
             extract_belief: belief 
         """
-        sorted_beliefs = sorted(self.beliefs_priorities, key=lambda x: (-x[1]))   
-        while self.check_entailment(extract_belief):
+        initial_belief_base = self.beliefs
+
+        while check_entailment(extract_belief, self.beliefs):
             entailed_formulas = []
             all_subsets = generate_all_subsets(self.beliefs)
             for subset in all_subsets:
-                if self.check_entailment(formula=extract_belief, belief_base=set(subset)):
+                if check_entailment(extract_belief, set(subset)):
                     entailed_formulas.append(subset)
             
             lowest_priority = - np.inf
@@ -69,26 +69,44 @@ class BeliefBase:
                         lowest_priority = self.priorities[formula]
                         formula_to_remove = formula
             self.remove(formula_to_remove)
-                        
+        
+        test_closure_contraction(extract_belief, self.beliefs)
+        test_inclusion_contraction(initial_belief_base, self.beliefs)
+        test_success_contraction(extract_belief, self.beliefs)
+
     def revise(self, belief):
-        # Levi's identity
+        '''
+        revise the belief by first contracting and efterwards expanding using levi's identity
+        '''
         self.contract(Not(belief))
         self.expand(belief)
 
-    def check_entailment(self, formula, belief_base=None):
-        if belief_base is None:
-            cnf_formula = to_cnf(formula)
-            belief_base_cnf = to_cnf(self.beliefs)
-            new_set = And(*belief_base_cnf, Not(cnf_formula))
-            return not satisfiable(new_set)
-        else:
-            cnf_formula = to_cnf(formula)
-            belief_base_cnf = to_cnf(belief_base)
-            new_set = And(*belief_base_cnf, Not(cnf_formula))
-            return not satisfiable(new_set)         
 
     def __str__(self):
         return "{" + ", ".join(map(str, self.beliefs)) + "}"
 
     def __repr__(self):
         return "{" + ", ".join(map(str, self.beliefs)) + "}"
+
+""" if __name__ == "__main__":
+    belief_base = BeliefBase('p q')
+    p, q = belief_base.symbols
+    # Expand belief base
+    belief_base.expand(p, 1)
+    belief_base.expand(Implies(p,q), 2)
+    print(belief_base.beliefs)
+    belief_base.contract(q)
+    print(belief_base.beliefs)  """
+
+if __name__ == "__main__":
+    belief_base = BeliefBase('p q')  
+    p, q = belief_base.symbols
+    # Expand belief base
+    belief_base.expand(p, 3)
+    belief_base.expand(q, 2)
+    belief_base.expand(Implies(p, q), 1)
+    print(belief_base.beliefs)
+    
+    belief_base.contract(q)
+    print("\nFinal belief base:")
+    print(belief_base.beliefs) 

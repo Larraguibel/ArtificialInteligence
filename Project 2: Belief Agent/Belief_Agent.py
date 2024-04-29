@@ -104,7 +104,14 @@ if __name__ == "__main__":
     print(belief_base.beliefs)  # Display the current belief base
     
     # Contract the belief base by removing beliefs that entail 'q'
+    print("\n Contraction with q\n")
     belief_base.contract(q)
     
-    print("\nFinal belief base:")
+    print("\n Belief base after contraction:")
     print(belief_base.beliefs)  # Display the final belief base after contraction
+ 
+    print("\nRevision with q:")
+    belief_base.revise(q)
+    
+    print("\n Belief base after revision:")
+    print(belief_base.beliefs)

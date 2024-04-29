@@ -1,7 +1,7 @@
 from sympy.logic.boolalg import And, Not, Or, Implies, to_cnf  
 from sympy import symbols  
 import numpy as np  
-from func import generate_all_subsets, check_entailment, test_closure_contraction, test_inclusion_contraction, test_success_contraction  
+from func import generate_all_subsets, check_entailment, test_closure_contraction_bb, test_inclusion_contraction_bb, test_success_contraction_bb  
 
 class BeliefBase:
     """
@@ -48,8 +48,12 @@ class BeliefBase:
         Contract the belief base by removing beliefs that entail the given belief.
         Contracting is done based on priorities to minimize impact.
         """
+        
         initial_belief_base = self.beliefs.copy()  # Save the initial belief base
         
+        if extract_belief in self.beliefs: # We start by removing extract_belief from our belief set.
+            self.remove(extract_belief)
+
         while check_entailment(extract_belief, self.beliefs):
             entailed_formulas = []  # List to store subsets of beliefs that entail the given belief
             all_subsets = generate_all_subsets(self.beliefs)  # Generate all subsets of the belief base
@@ -57,7 +61,7 @@ class BeliefBase:
             for subset in all_subsets:
                 if check_entailment(extract_belief, set(subset)):  # Check if subset entails the belief
                     entailed_formulas.append(subset)  # Add to the list of entailed subsets
-            
+                        
             # Find the subset with the highest priority for contraction
             lowest_priority = -np.inf  # Initialize with a very low value
             formula_to_remove = None  # Placeholder for the formula to be removed
@@ -67,16 +71,15 @@ class BeliefBase:
                     if self.priorities[formula] > lowest_priority:  # Find the highest priority
                         lowest_priority = self.priorities[formula]
                         formula_to_remove = formula
-            
+
             self.remove(formula_to_remove)  # Remove the formula with the highest priority
-        
-            if self.beliefs == set(): # If the set is empty
-                break
+            
+            print(check_entailment(extract_belief, self.beliefs), self.beliefs)
         
         # Ensure the belief base satisfies contraction properties
-        test_closure_contraction(extract_belief, self.beliefs)
-        test_inclusion_contraction(initial_belief_base, self.beliefs)
-        test_success_contraction(extract_belief, self.beliefs)
+        test_closure_contraction_bb(extract_belief, self.beliefs)
+        test_inclusion_contraction_bb(initial_belief_base, self.beliefs)
+        test_success_contraction_bb(extract_belief, self.beliefs)
 
     def revise(self, belief, priority):
         """

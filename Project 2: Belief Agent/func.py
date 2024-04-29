@@ -28,7 +28,7 @@ def generate_all_subsets(belief_base):
         A list of all possible subsets from size 1 to size len(belief_base) - 1.
     """
     subsets = []  # Initialize an empty list to store subsets
-    for n in range(1, len(belief_base)):
+    for n in range(1, len(belief_base) + 1):
         subsets.extend(generate_subsets(belief_base, n))  # Generate subsets of size `n` and add them to the list
     return subsets  # Return the complete list of subsets
 
@@ -52,7 +52,7 @@ def check_entailment(belief, belief_base):
     return not satisfiable(new_set)  # If not satisfiable, then entailment is true
 
 
-def test_closure_contraction(belief, belief_base):
+def test_closure_contraction_bb(belief, belief_base):
     """
     Check for the closure property in a contracted belief base.
     
@@ -67,7 +67,7 @@ def test_closure_contraction(belief, belief_base):
     assert not check_entailment(belief, belief_base), "Closure is not satisfied"
 
 
-def test_inclusion_contraction(initial_belief_base, belief_base):
+def test_inclusion_contraction_bb(initial_belief_base, belief_base):
     """
     Check for the inclusion property in a contracted belief base.
     
@@ -82,7 +82,7 @@ def test_inclusion_contraction(initial_belief_base, belief_base):
     assert belief_base.issubset(initial_belief_base), "Inclusion is not satisfied"
 
 
-def test_success_contraction(belief, belief_base):
+def test_success_contraction_bb(belief, belief_base):
     """
     Check for the success property in a contracted belief base.
     

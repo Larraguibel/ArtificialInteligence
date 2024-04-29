@@ -11,9 +11,6 @@ filterwarnings("ignore")
 def test_closure_contraction():
     print("\nExecuting test_closure_contraction")
     # Closure: The belief base should not entail the contracted belief after contraction
-    belief_base = BeliefBase('p q')
-    p, q = belief_base.symbols
-
     # Initial beliefs
     """ belief_base.expand(Implies(p, q), 1)  # `p → q`
     belief_base.expand(p, 2)  # `p`

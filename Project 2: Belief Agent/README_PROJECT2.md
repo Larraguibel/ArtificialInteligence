@@ -6,6 +6,6 @@ This is a Python implementation of a belief base, which supports the basic opera
  
 * *AGM_postulates_Test.py*: functions implementing the AGM postulates to test over the contraction and revision operations in the belief base. There is a main that allow you to easily test the implementation of the AGM postulates over  
  
-* *func.py*: Auxiliar functions for the BeliefBase class implementation and 3 contraction AGM postulates for functioning guarantee.
+* *func.py*: Auxiliar functions for the BeliefBase class implementation and 3 contraction AGM postulates to check that everything is working in the BeliefBase Class.
 
 

@@ -70,6 +70,9 @@ class BeliefBase:
             
             self.remove(formula_to_remove)  # Remove the formula with the highest priority
         
+            if self.beliefs == set(): # If the set is empty
+                break
+        
         # Ensure the belief base satisfies contraction properties
         test_closure_contraction(extract_belief, self.beliefs)
         test_inclusion_contraction(initial_belief_base, self.beliefs)

@@ -16,6 +16,7 @@ class BeliefBase:
     def expand(self, belief, priority):
         
         """
+        _summary_
         Adds a given belief to the belief set. All beliefs are
         stored in there CNF form, to garantee compatibility between
         functions. It also saves the priorities in two different forms:
@@ -76,7 +77,9 @@ class BeliefBase:
 
     def revise(self, belief):
         '''
-        revise the belief by first contracting and efterwards expanding using levi's identity
+        The implementation for revision uses Levi's identity. This means,
+        to revise the belief base with a new belief, we first contract with respect
+        to the negation of the new belief, and then expand our base with the new belief.
         '''
         self.contract(Not(belief))
         self.expand(belief)
@@ -88,15 +91,6 @@ class BeliefBase:
     def __repr__(self):
         return "{" + ", ".join(map(str, self.beliefs)) + "}"
 
-""" if __name__ == "__main__":
-    belief_base = BeliefBase('p q')
-    p, q = belief_base.symbols
-    # Expand belief base
-    belief_base.expand(p, 1)
-    belief_base.expand(Implies(p,q), 2)
-    print(belief_base.beliefs)
-    belief_base.contract(q)
-    print(belief_base.beliefs)  """
 
 if __name__ == "__main__":
     belief_base = BeliefBase('p q')  

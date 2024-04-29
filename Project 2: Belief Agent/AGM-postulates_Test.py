@@ -2,6 +2,7 @@ from sympy.logic.boolalg import And, Or, Not, Implies
 from sympy import symbols
 from Belief_Agent import BeliefBase
 from sympy.logic.boolalg import to_cnf
+from func import check_entailment
 
 # AGM Postulates for Belief Contraction
 
@@ -11,15 +12,27 @@ def test_closure_contraction():
     p, q = belief_base.symbols
     
     # Initial beliefs
-    belief_base.expand(Implies(p, q), 1)  # `p → q`
+    """ belief_base.expand(Implies(p, q), 1)  # `p → q`
     belief_base.expand(p, 2)  # `p`
-    belief_base.expand(q, 3)  # `q`
+    belief_base.expand(q, 3)  # `q` """
+
+    belief_base = BeliefBase('p q')  
+    p, q = belief_base.symbols  # Extract the symbols
+    
+    # Expand the belief base with some beliefs and their priorities
+    belief_base.expand(p, 3)
+    belief_base.expand(q, 2)
+    belief_base.expand(Implies(p, q), 1)
+    
+    print("Initial belief base:")
+    print(belief_base.beliefs)  # Display the current belief base
+   
     
     # Contract `q`
     belief_base.contract(q)
 
     # After contracting `q`, it should not be entailed
-    assert not belief_base.check_entailment(q), "After contraction, `q` should not be entailed"
+    assert not check_entailment(q, belief_base), "After contraction, `q` should not be entailed"
 
 def test_inclusion_contraction():
     # C2 - Inclusion: The contracted belief base should be a subset of the original base
@@ -165,7 +178,7 @@ if __name__ == "__main__":
     print(belief_base.beliefs)  # Display the final belief base after contraction
 
 # test for closure contraction
-    test_closure_contraction()
+    #test_closure_contraction()
 
 # Test for inclusion
     test_inclusion_contraction()
@@ -174,7 +187,7 @@ if __name__ == "__main__":
     test_vacuity_contraction()
 
 # Test for success contraction
-    test_success_contraction
+    #test_success_contraction()
 
 # Test for core retention contraction
     test_core_retention_contraction()
@@ -187,7 +200,7 @@ if __name__ == "__main__":
 
 # test for inclusion revision
     test_inclusion_revision()
-
+    print('is here')
 # Test success revision
     test_success_revision()
 

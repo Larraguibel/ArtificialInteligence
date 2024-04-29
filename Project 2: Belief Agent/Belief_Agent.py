@@ -75,14 +75,14 @@ class BeliefBase:
         test_inclusion_contraction(initial_belief_base, self.beliefs)
         test_success_contraction(extract_belief, self.beliefs)
 
-    def revise(self, belief):
+    def revise(self, belief, priority):
         """
         Revise the belief base by first contracting and then expanding with the given belief.
         The contraction is done using Levi's identity, which requires removing the negation
         of the belief first.
         """
         self.contract(Not(belief))  # Contract by removing beliefs that entail the negation of the belief
-        self.expand(belief)  # Expand by adding the given belief
+        self.expand(belief, priority)  # Expand by adding the given belief
 
     def __str__(self):
         return "{" + ", ".join(map(str, self.beliefs)) + "}"  # String representation of the belief base
@@ -100,18 +100,19 @@ if __name__ == "__main__":
     belief_base.expand(q, 2)
     belief_base.expand(Implies(p, q), 1)
     
-    print("Initial belief base:")
+    print("\nInitial belief base:")
     print(belief_base.beliefs)  # Display the current belief base
     
     # Contract the belief base by removing beliefs that entail 'q'
-    print("\n Contraction with q\n")
+    print("\n Contraction with q")
     belief_base.contract(q)
     
-    print("\n Belief base after contraction:")
+    print("Belief base after contraction:")
     print(belief_base.beliefs)  # Display the final belief base after contraction
  
     print("\nRevision with q:")
-    belief_base.revise(q)
+    belief_base.revise(q, 1)
     
-    print("\n Belief base after revision:")
+    print("Belief base after revision:")
     print(belief_base.beliefs)
+    print("\n")

@@ -21,8 +21,6 @@ def test_closure_contraction():
     # After contracting `q`, it should not be entailed
     assert not belief_base.check_entailment(q), "After contraction, `q` should not be entailed"
 
-
-
 def test_inclusion_contraction():
     # C2 - Inclusion: The contracted belief base should be a subset of the original base
     belief_base = BeliefBase('p q')
@@ -128,7 +126,6 @@ def test_vacuity_revision():
     
     assert belief_base.beliefs == initial_beliefs  # The belief base should remain unchanged
 
-
 def test_consistency_revision():
     # R5 - Consistency: The belief base should remain consistent after revision unless inherently inconsistent
     belief_base = BeliefBase('p q')
@@ -144,3 +141,61 @@ def test_superexpansion_revision():
     belief_base.expand(Implies(p, q), 1)  # `Implies(p, q)`
     belief_base.revise(p)  # Revise with `p`
     assert belief_base.check_entailment(q)  # Should still derive `q`
+
+
+if __name__ == "__main__":
+
+# Test for priority
+    # Create a belief base with specified atomic symbols
+    belief_base = BeliefBase('p q')  
+    p, q = belief_base.symbols  # Extract the symbols
+    
+    # Expand the belief base with some beliefs and their priorities
+    belief_base.expand(p, 3)
+    belief_base.expand(q, 2)
+    belief_base.expand(Implies(p, q), 1)
+    
+    print("Initial belief base:")
+    print(belief_base.beliefs)  # Display the current belief base
+    
+    # Contract the belief base by removing beliefs that entail 'q'
+    belief_base.contract(q)
+    
+    print("\nFinal belief base:")
+    print(belief_base.beliefs)  # Display the final belief base after contraction
+
+# test for closure contraction
+    test_closure_contraction()
+
+# Test for inclusion
+    test_inclusion_contraction()
+
+# Test for vacuity contraction
+    test_vacuity_contraction()
+
+# Test for success contraction
+    test_success_contraction
+
+# Test for core retention contraction
+    test_core_retention_contraction()
+
+# Test for recovery contraction
+    test_recovery_contraction()
+
+# test closure revision
+    test_closure_revision()
+
+# test for inclusion revision
+    test_inclusion_revision()
+
+# Test success revision
+    test_success_revision()
+
+# Test vacuity revision
+    test_vacuity_revision()
+
+# Test for consistency revision
+    test_consistency_revision()
+
+# Test for superexpansion revision
+    test_superexpansion_revision()

@@ -1,7 +1,6 @@
-import pytest
 from sympy.logic.boolalg import And, Or, Not, Implies
 from sympy import symbols
-from belief_agent import BeliefBase
+from Belief_Agent import BeliefBase
 from sympy.logic.boolalg import to_cnf
 
 # AGM Postulates for Belief Contraction
